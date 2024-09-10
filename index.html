@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number to Words Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        table {
+            width: 700px;
+        }
+        input[readonly] {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <form id="form-print" enctype="text/plain" class="form-control" style="padding: 40px;">
+            <h2 class="form-control">Make Voucher</h2>
+            <table>
+                <tr>
+                    <td><label>Voucher Number</label></td>
+                    <td><input type="text" class="form-control" id="VoucherNumber" name="VoucherNumber" placeholder="Voucher Number"></td>
+                </tr>
+                <tr>
+                    <td><label>Enter Date : </label></td>
+                    <td><input type="date" class="form-control" id="date" name="date" value="0"></td>
+                </tr>
+                <tr>
+                    <td><label>Enter Amount : </label></td>
+                    <td><input type="number" id="amount" name="amount" placeholder="Amount" min="0" max="99999" oninput="convertNumberToWords()"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><input type="text" id="amtwords" name="amtwords" class="form-control" readonly></td>
+                </tr>
+                <tr>
+                    <td><label>Pay to : </label></td>
+                    <td><input type="text" class="form-control" id="payto" name="payto" placeholder="Name"></td>
+                </tr>
+                <tr>
+                    <td><label>Being : </label></td>
+                    <td><input type="text" class="form-control" id="being" name="being" placeholder="Being"></td>
+                </tr>
+            </table>
+            <button type="button" class="btn btn-primary" onclick="GeneratePdf()">Make Voucher</button>
+        </form>
+        <!-- Div to display PDF content before generating -->
+        <div id="pdf-content" style="display: none;"></div>
+    </div>
+
+    <script>
+       function convertNumberToWords() {
+    const num = document.getElementById('amount').value;
+    if (num === "" || isNaN(num) || num < 0 || num >= 100000) {
+        document.getElementById('amtwords').value = "Please enter a valid number between 0 and 99,999.";
+        return;
+    }
+    document.getElementById('amtwords').value = numberToWords(parseInt(num)) + " Only";
+}
+
+function numberToWords(n) {
+    const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
+    const teens = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+    const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+    function belowHundred(num) {
+        if (num < 10) return ones[num];
+        else if (num >= 10 && num < 20) return teens[num - 10];
+        else {
+            const tenVal = tens[Math.floor(num / 10)];
+            const oneVal = ones[num % 10];
+            return tenVal + (oneVal ? " " + oneVal : "");
+        }
+    }
+
+    function belowThousand(num) {
+        if (num < 100) return belowHundred(num);
+        else {
+            const hundredVal = ones[Math.floor(num / 100)] + " Hundred";
+            const rest = num % 100;
+            return hundredVal + (rest ? " " + belowHundred(rest) : "");
+        }
+    }
+
+    if (n === 0) return "Zero";
+
+    if (n < 1000) return belowThousand(n);
+
+    let thousandPart = Math.floor(n / 1000);
+    let hundredPart = n % 1000;
+    let result = belowThousand(thousandPart) + " Thousand";
+    if (hundredPart > 0) {
+        result += " " + belowThousand(hundredPart);
+    }
+    return result.trim();
+}
+
+function formatDateToDdMmYyyy(date) {
+    if (!date || isNaN(date.getTime())) {
+        return "Invalid Date";
+    }
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero indexed
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+}
+
+function GeneratePdf() {
+    // Get user data
+    const voucherno = document.getElementById('VoucherNumber').value;
+    const dateValue = document.getElementById('date').value;
+    const voucherdate = dateValue ? formatDateToDdMmYyyy(new Date(dateValue)) : "Invalid Date";
+    const voucheramount = document.getElementById('amount').value;
+    const amountwords = document.getElementById('amtwords').value;
+    const name = document.getElementById('payto').value;
+    const voucherbeing = document.getElementById('being').value;
+
+    // Check for missing values
+    // if (!voucherno || !dateValue || !voucheramount || !name || !voucherbeing) {
+    //     alert("Please fill in all the fields.");
+    //     return;
+    // }
+
+    // Create the PDF content as an HTML string
+    const pdfContent = `
+        <div>
+           
+            <div style="text-align: center; padding-top:60px">
+                <h1>Golden Hills Arts & Science College, Elettil</h1>
+                <h5 style="margin-top:-15px;">Affiliated to University of Calicut & Recognized by Govt. of Kerala</h5>
+                <h4>P.O.Valiyaparamba, Kozhikode, Kerala - 673 572</h4>
+            </div>
+            <div style="text-align: center;">
+                <hr style="height: .5 px; background-color: black;">
+                <br>
+                <h2><strong>VOUCHER</strong></h2>
+                
+            </div>
+        </div>
+        <div style="position: relative; width: 100%; height: 120px;">
+		<div style="width: 55%; height: 100%;  position: relative;"></div>
+	
+		<div style="width: 40%; text-align: left; position: absolute;  top: 0; right: 0; padding: 10px; box-sizing: border-box;">
+			<p><strong>Voucher Number : ${voucherno}</strong></p>
+			<p><strong>Date : ${voucherdate}</strong></p>
+			<p><strong>Amount : ${voucheramount}</strong></p>
+		</div>
+	</div>
+<container>
+<div>
+<p style="padding-left:50px; padding-right:30px">Pay to :  <strong>${name}</strong> </p>
+<p style="padding-left:50px; padding-right:30px">Rupees(in words) : <strong>${amountwords}</strong></p>
+<p style="padding-left:50px; padding-right:30px">Being : <strong>${voucherbeing}</strong></p>
+
+    </div>
+    <br>
+    <div>
+		<br>
+
+		<table style="padding-left:50px; padding-right:30px; width: 100%">
+			<tr>
+				<td>Approved by: .............................. </td>
+				<td></td>
+				<td>Paid by</td>
+				<td>Revenue Stamp</td>
+				
+	
+			</tr>    
+			<tr><td><br></td></tr>
+			<tr><td><br></td></tr>
+			<br>
+	
+			 <tr>
+				<td>Drawn on : ................................. </td>
+				<td></td>
+				<td>Cash/cheque........................</td>
+				<td>Reciever's Signature</td>
+				
+	
+			</tr>   
+			
+		</table>   
+		</div> 
+</container>
+
+
+
+
+
+    `;
+
+    // Update the PDF content in the display div
+    const pdfElement = document.getElementById('pdf-content');
+    pdfElement.innerHTML = pdfContent;
+    pdfElement.style.display = 'block'; // Ensure the element is visible when generating the PDF
+
+    // Generate the PDF using html2pdf
+    setTimeout(() => {
+        html2pdf()
+            .from(pdfElement)
+            .set({
+                margin: 1,
+                filename: 'voucher.pdf',
+                html2canvas: { scale: 2 },
+                jsPDF: { orientation: 'portrait' }
+            })
+            .save()
+            .then(() => {
+                pdfElement.style.display = 'none'; // Hide the element again after generating the PDF
+            })
+            .catch(error => {
+                console.error("Error generating PDF:", error);
+                alert("An error occurred while generating the PDF. Please try again.");
+            });
+    }, 500); // Delay to ensure the content is fully rendered
+}
+
+    </script>
+
+    <!-- Include html2pdf.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+</body>
+</html>
