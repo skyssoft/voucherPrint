@@ -216,7 +216,7 @@ function GeneratePdf() {
             .from(pdfElement)
             .set({
                 margin: 1,
-                filename: 'voucher.pdf',
+                filename: '${name}.pdf',
                 html2canvas: { scale: 2 },
                 jsPDF: { orientation: 'portrait' }
             })
